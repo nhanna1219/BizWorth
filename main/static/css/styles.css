@@ -1,0 +1,72 @@
+.main {
+    overflow: hidden;
+}
+
+.bg-img {
+    height: 80vh;
+    width: 100%;
+    background-color: rgba(0, 0, 0, 1);
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: -1;
+}
+
+.choose-business {
+    position: relative;
+    margin-top: 160px;
+}
+
+.content {
+    margin-top: 44vh;
+}
+
+.card-content {
+    height: 80%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.content-finance .col{
+    height: 12rem;
+}
+
+.networth {
+    font-size: 5rem;
+    font-weight: 700;
+}
+
+.circle-chart {
+    align-self: center;
+    text-align: center;
+}
+
+.footer {
+    background-color: black;
+    color: #fff;
+}
+
+.img-uit{
+    width: 200px;
+    height: 150px;
+}
+
+.img-phone{
+    width: 40px;
+    padding: 0;
+    margin-left: 40px;
+}
+
+.img-mail{
+    width: 50px;
+    padding: 0;
+    margin-left: 32px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+.title-footer {
+    margin-top: 30px;
+    margin-bottom: 20px;
+}
