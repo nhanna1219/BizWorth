@@ -15,6 +15,7 @@
     <link rel="icon" type="image/x-icon" href="{% static 'img/favicon.ico' %}">
 
     <script src="https://kit.fontawesome.com/3518e7db2c.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <script src="{% static 'js/search.js' %}"></script>
     <title>BizWorth</title>
 </head>
@@ -112,7 +113,15 @@
                                         </h5>
                                     </div>
                                     <div class="financial-statement">
-
+                                        <div class="row">
+                                            {{ graph_html_fed | safe }}
+                                        </div>
+                                        <div class="row">
+                                            {{ graph_html_eps | safe }}
+                                        </div>
+                                        <div class="row">
+                                            {{ graph_html_lnst | safe }}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -130,7 +139,7 @@
                                         </h5>
                                     </div>
                                     <div class="row">
-                                        {{ plot_div | safe }}
+                                        {{ graph_html_div | safe }}
                                     </div>
                                 </div>
                             </div>

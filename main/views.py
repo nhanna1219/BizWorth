@@ -1,10 +1,10 @@
-from plotly.graph_objs import Scatter
-from plotly.graph_objs import Scatter, Layout
+from plotly.graph_objs import Scatter, Layout, Figure
 from plotly.offline import plot
 from django.shortcuts import render
+import pandas as pd
 import random
 
-def home(request):
+def plot_div(request):
     actualBizVal = [random.randint(10, 100) for _ in range(12)]
     bizVal = [random.randint(10, 100) for _ in range(12)]
     quarter = ['Q1/2021', 'Q2/2021', 'Q3/2021', 'Q4/2021',
@@ -33,4 +33,80 @@ def home(request):
     )
     plot_div = plot({'data': [actualValue, bizValue], 'layout': layout}, output_type='div')
 
-    return render(request, "home.html", context={'plot_div': plot_div})
+    return plot_div
+
+def plot_chart_fed(request):
+    csv_file_path = 'main/static/data/Fed.csv'
+
+    df = pd.read_csv(csv_file_path)
+
+    df = df.dropna()
+
+    fig = Figure()
+    fig.add_trace(Scatter(x=df['Quarter'], y=df['Rate'], mode='lines', name='Fed Rate'))
+    fig.update_layout(
+        title='Fed Interest Rate',
+        xaxis=dict(title='Quarter'),
+        yaxis=dict(title='Interest Rate'),
+    )
+    
+    graph_html_fed = plot(fig, output_type='div', include_plotlyjs=False)
+
+    return graph_html_fed
+
+def plot_chart_eps(request):
+    csv_file_path = 'main/static/data/EPSCSV.csv'
+
+    df = pd.read_csv(csv_file_path)
+
+    df = df.dropna()
+
+    fig = Figure()
+
+    for column in df.columns[1:]:
+        fig.add_trace(Scatter(x=df['Quarter'], y=df[column], mode='lines+markers', name=column))
+
+    fig.update_layout(
+        title='Earnings Per Share (EPS)',
+        xaxis=dict(title='Quarter'),
+        yaxis=dict(title='Values'),
+        showlegend=True
+    )
+
+    graph_html_eps = plot(fig, output_type='div', include_plotlyjs=False)
+
+    return graph_html_eps
+
+def plot_chart_lnst(request):
+    csv_file_path = 'main/static/data/LNSTCSV.csv'
+
+    df = pd.read_csv(csv_file_path)
+
+    df = df.dropna()
+
+    fig = Figure()
+
+    for column in df.columns[1:]:
+        fig.add_trace(Scatter(x=df['Quarter'], y=df[column], mode='lines+markers', name=column))
+
+    fig.update_layout(
+        title='Lợi nhuận sau thuế (đơn vị triệu đồng)',
+        xaxis=dict(title='Quarter'),
+        yaxis=dict(title='Values'),
+        showlegend=True
+    )
+
+    graph_html_lnst = plot(fig, output_type='div', include_plotlyjs=False)
+
+    return graph_html_lnst
+
+def home(request):
+    
+    graph_html_eps = plot_chart_eps(request)
+    graph_html_lnst = plot_chart_lnst(request)
+    graph_html_fed = plot_chart_fed(request)
+
+    # Chart mẫu
+    graph_html_div = plot_div(request)
+
+    return render(request, "home.html", {'graph_html_div': graph_html_div, 'graph_html_eps': graph_html_eps, 'graph_html_lnst': graph_html_lnst, 'graph_html_fed': graph_html_fed})
