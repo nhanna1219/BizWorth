@@ -7,6 +7,7 @@ name = "pypi"
 django = "*"
 plotly = "*"
 numpy-financial = "*"
+pandas = "*"
 
 [dev-packages]
 
