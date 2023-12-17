@@ -8,6 +8,9 @@ django = "*"
 plotly = "*"
 numpy-financial = "*"
 pandas = "*"
+joblib = "*"
+statsmodels = "*"
+pmdarima = "*"
 
 [dev-packages]
 
