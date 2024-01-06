@@ -1,15 +1,19 @@
-document.addEventListener('DOMContentLoaded', function () {
+function inputHandler(){
     const inputField = document.querySelector('.chosen-value');
-    const dropdown = document.querySelector('.value-list');
-    const dropdownArray = [...document.querySelectorAll('.tickers')];
-    
+    const dropdown = document.querySelector('.tickers-list');
+    const dropdownArray = [...document.querySelectorAll('.ticker')];
+    const backdrop = document.querySelector('.backdrop');
+
     let valueArray = [];
     dropdownArray.forEach(item => {
         valueArray.push(item.textContent);
     });
 
     const closeDropdown = () => {
-        dropdown.classList.remove('open');
+        setTimeout(() => {
+            dropdown.classList.remove('open');
+            backdrop.style.display = 'none';
+        }, 100); 
     }
 
     inputField.addEventListener('input', (e) => {
@@ -33,11 +37,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Click on Ticker Event
     dropdownArray.forEach(item => {
-        item.addEventListener('click', (evt) => {
+        item.addEventListener('click', async (evt) => {
+            const ticker = item.getAttribute('data-value');
+            
             inputField.value = item.textContent;
             dropdownArray.forEach(dropdown => {
                 dropdown.classList.add('closed');
             });
+            await getTickerVisualization(ticker);
             document.getElementById('valuation').scrollIntoView();
         });
     })
@@ -49,7 +56,7 @@ document.addEventListener('DOMContentLoaded', function () {
         dropdownArray.forEach(dropdown => {
             dropdown.classList.remove('closed');
         });
-        this.body.classList.add('overlay');
+        backdrop.style.display = 'block';
     });
 
     inputField.addEventListener('blur', () => {
@@ -59,5 +66,42 @@ document.addEventListener('DOMContentLoaded', function () {
             inputField.style = "font-weight: 600;";
         closeDropdown();
     });
+}
+
+async function getTickerVisualization(ticker){
+    let data = { 'ticker': ticker };
+    try {
+        const response = await fetch('http://127.0.0.1:8000/get_ticker_chart/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const res = await response.json();
+        const container = document.getElementById('chart-visualization');
+        container.innerHTML = '';
+        for (let obj in res){
+            container.innerHTML += res[obj];
+        }
+        // container.innerHTML = res.graph_stock_pred;
+        const scripts = container.querySelectorAll('script');
+        if (scripts) {
+            for (let script of scripts){
+                const scriptContent = script.textContent || script.innerText;
+                new Function(scriptContent)();
+            }
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+document.addEventListener('DOMContentLoaded', function () {
+    inputHandler();
 
 });

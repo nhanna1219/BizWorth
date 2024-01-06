@@ -5,7 +5,7 @@ class PEHelper:
     This helper is used to forecast stock prices for a year based on quarterly data, using the PE method. 
     Example: To forecast stock price for the year 2023, you require the quarterly data for all four quarters of that year.
     """
-    def __init__(self, rate=0.75, unit=1000000000):
+    def __init__(self, rate=0.75, unit=10**9):
         self.AdjustmentRate = rate
         self.Unit = unit
         

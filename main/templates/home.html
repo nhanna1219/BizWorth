@@ -51,6 +51,7 @@
                 </div>
             </nav>
 
+            <div class="backdrop"></div>
             {% comment %} Choose Business {% endcomment %}
             <div class="business w-50">
                 <p class="text-center text-white text-opacity-75 fs-3">Your Business, Our Expertise</p>
@@ -61,10 +62,10 @@
                                 placeholder="Choose Your Ticker" />
                             <i class="ic-search fa-solid fa-magnifying-glass"></i>
                         </div>
-                        <ul class="value-list">
-                            <li class="tickers">FPT Corporation (FPT)</li>
-                            <li class="tickers">Hoa Phat Group (HPG)</li>
-                            <li class="tickers">Vinamilk (VNM)</li>
+                        <ul class="tickers-list">
+                            {% for ticker in tickers %}
+                                <li class="ticker" data-value="{{ ticker.short_name }}">{{ ticker.full_name }}</li>
+                            {% endfor %}
                         </ul>
                     </form>
                 </div>
@@ -101,7 +102,7 @@
                         </div>
                     </div>
                     {% comment %} Financial Statement {% endcomment %}
-                    <div class="row mb-3 mt-3">
+                    {% comment %} <div class="row mb-3 mt-3">
                         <div class="col">
                             <div class="card">
                                 <div class="card-body">
@@ -126,7 +127,7 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </div> {% endcomment %}
                     {% comment %} Chart {% endcomment %}
                     <div class="row mb-3 mt-3">
                         <div class="col">
@@ -138,8 +139,17 @@
                                             Visualization
                                         </h5>
                                     </div>
-                                    <div class="row">
-                                        {{ graph_html_div | safe }}
+                                    <div class="dropdown">
+                                        <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+                                          Chọn số điểm
+                                        </button>
+                                        <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                          <li><a class="dropdown-item" href="#" data-points="10">10 Points</a></li>
+                                          <li><a class="dropdown-item" href="#" data-points="20">20 Points</a></li>
+                                          <li><a class="dropdown-item" href="#" data-points="50">50 Points</a></li>
+                                        </ul>
+                                      </div>
+                                    <div id="chart-visualization" class="row">
                                     </div>
                                 </div>
                             </div>
@@ -172,11 +182,13 @@
                         <img class="img-uit" src="{% static 'img/uit.png' %}" width="30" height="30">
                     </div>
                     <div class="row">
-                        <a href="#" class="fs-5 text-secondary"><img class="img-phone" src="{% static 'img/phone.png' %}" width="30" height="30">
+                        <a href="#" class="fs-5 text-secondary"><img class="img-phone"
+                                src="{% static 'img/phone.png' %}" width="30" height="30">
                             0901 234 567</a>
                     </div>
                     <div class="row">
-                        <a href="#" class="fs-5 text-secondary"><img class="img-mail" src="{% static 'img/mail.png' %}" width="30" height="30">
+                        <a href="#" class="fs-5 text-secondary"><img class="img-mail"
+                                src="{% static 'img/mail.png' %}" width="30" height="30">
                             uit@gmail.com</a>
                     </div>
                 </div>
@@ -235,7 +247,8 @@
                     </p>
                 </div>
             </div>
-        </div>
+        </div>  
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
 </body>
 
 </html>

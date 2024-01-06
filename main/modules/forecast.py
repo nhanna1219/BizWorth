@@ -223,7 +223,6 @@ class ForecastHelper:
     def SaveModel(self, path, name):
         if self.__Model is None:
             raise ValueError("Model not loaded")
-        
         if not os.path.isdir(path):
             raise ValueError("Path must be a directory")
         
