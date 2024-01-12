@@ -10,6 +10,10 @@ a{
     overflow: hidden;
 }
 
+.valuation {
+    background: #eceff1;
+}
+
 .business {
     position: absolute;
     top: 50%;
@@ -18,15 +22,19 @@ a{
     z-index: 1000;
 }
 
-.bussiness-profile {
-    font-family: roboto;
-    min-height: 70%;
-    display: flex;
-    text-align: justify;
-    text-indent: 50px;
-    padding: 7px;
+.nav-item {
+    width: 120px;
 }
-
+p {
+    padding: 0 25px;
+    font-family: 'Arial', sans-serif; 
+    font-size: 16px; 
+    line-height: 1.6; 
+    color: #333333;  
+    text-align: justify;
+    margin-top: 10px; 
+    margin-bottom: 10px; 
+}
 .content-finance .col {
     height: 12rem;
 }
@@ -184,3 +192,32 @@ a{
     display: none; 
     z-index: 10;
 }
+
+.dropdown-menu{
+    padding: 0;
+}
+.dropdown-item:focus, .dropdown-item:hover {
+    color: white;
+    background-color: #233c56;
+}
+
+.dropdown-menu {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+ul.styled-list {
+    list-style-type: none; 
+    padding-left: 0; 
+    margin-bottom: 20px; 
+}
+
+ul.styled-list li {
+    margin-bottom: 15px;
+    line-height: 1.5; 
+}
+
+.read-more,.business-info-list {
+    padding: 0 25px;
+}
+

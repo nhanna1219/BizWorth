@@ -11,8 +11,8 @@ pandas = "*"
 joblib = "*"
 statsmodels = "*"
 pmdarima = "*"
-
-[dev-packages]
+django-livereload-server = "*"
+requests = "*"
 
 [requires]
 python_version = "3.11"
