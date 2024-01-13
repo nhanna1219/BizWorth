@@ -25,6 +25,9 @@
 <body>
     {% comment %} Header {% endcomment %}
     <div class="main">
+        <button type="button" class="btn btn-dark btn-floating btn-lg"id="btn-back-to-top" >
+            <i class="fas fa-arrow-up"></i>
+        </button>
         <div id="home">
             {% comment %} Navbar {% endcomment %}
             <nav class="navbar navbar-expand-lg navbar-dark">
@@ -42,10 +45,13 @@
                                 <a class="nav-link fw-semibold" aria-current="page" href="#home">Home</a>
                             </li>
                             <li class="nav-item btn-lg">
-                                <a class="nav-link fw-semibold" href="#valuation">Valuation</a>
+                                <a class="nav-link fw-semibold" id="valuation-nav-btn" href="#valuation">Valuation</a>
                             </li>
                             <li class="nav-item btn-lg">
-                                <a class="nav-link fw-semibold" href="#footer">About us</a>
+                                <a class="nav-link fw-semibold" id="financial-nav-btn" href="#">Financial</a>
+                            </li>
+                            <li class="nav-item btn-lg">
+                                <a class="nav-link fw-semibold" href="#about">About us</a>
                             </li>
                         </ul>
                     </div>
@@ -61,7 +67,7 @@
                     <form class="w-75 text-center">
                         <div class="search-box">
                             <input class="chosen-value w-100" type="text" value=""
-                                placeholder="Choose Your Ticker" />
+                                placeholder="Chọn cổ phiếu" />
                             <i class="ic-search fa-solid fa-magnifying-glass"></i>
                         </div>
                         <ul class="tickers-list">
@@ -73,15 +79,46 @@
                 </div>
             </div>
         </div>
-
+        {% comment %} Financial Statement {% endcomment %}
+        <div id="financial-report" style="display:none">
+            <div class="container p-5">
+                <div class="d-flex justify-content-center">
+                    <p class="fs-3 fw-bold mb-5 text-black">Báo Cáo Tài Chính</p>
+                    <img style="margin-left: 5px;margin-top: 7px;" src="{% static 'img/financial-report.png' %}" width="40"
+                        height="40">
+                </div>
+                <div class="row mb-3 mt-3">
+                    <div class="col">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="card-title d-flex align-items-center">
+                                    <img src="{% static 'img/financial-statement.png' %}" width="30"
+                                        height="30">
+                                    <h5 class="px-4" style="line-height: 40px;">
+                                        Chỉ Số Tài Chính
+                                    </h5>
+                                </div>
+                                <div class="financial-statement">
+                                    <div id="eps-chart-container" class="row mt-4"></div>
+                                    <hr class="hr hr-blurry mt-3 mb-4"/>
+                                    <div id="lnst-chart-container" class="row"></div>
+                                    <hr class="hr hr-blurry mt-3 mb-4"/>
+                                    <div id="fed-chart-container" class="row"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div id="valuation" style="display:none;">
             <div class="container p-5">
                 <div class="d-flex justify-content-center">
                     <p class="fs-3 fw-bold mb-5 text-black">Kết Quả Định Giá</p>
-                    <img style="margin-left: 20px; margin-top: -5px" src="{% static 'img/hooray.png' %}" width="40"
+                    <img style="margin-left: 5px;margin-top: 7px;" src="{% static 'img/hooray.png' %}" width="40"
                         height="40">
                 </div>
-                <div class="row mb-5">
+                <div class="row mb-5 ">
                     {% comment %} Company Profile {% endcomment %}
                     <div class="row mb-3 mt-3">
                         <div class="col">
@@ -147,33 +184,7 @@
                             </div>
                         </div>
                     </div>
-                    {% comment %} Financial Statement {% endcomment %}
-                    {% comment %} <div class="row mb-3 mt-3">
-                        <div class="col">
-                            <div class="card">
-                                <div class="card-body">
-                                    <div class="card-title d-flex align-items-center">
-                                        <img src="{% static 'img/financial-statement.png' %}" width="30"
-                                            height="30">
-                                        <h5 class="px-4" style="line-height: 40px;">
-                                            Financial Statement
-                                        </h5>
-                                    </div>
-                                    <div class="financial-statement">
-                                        <div class="row">
-                                            {{ graph_html_fed | safe }}
-                                        </div>
-                                        <div class="row">
-                                            {{ graph_html_eps | safe }}
-                                        </div>
-                                        <div class="row">
-                                            {{ graph_html_lnst | safe }}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div> {% endcomment %}
+                    
                     {% comment %} Chart {% endcomment %}
                     <div class="row mb-3 mt-3">
                         <div class="col">
@@ -185,22 +196,6 @@
                                             Biểu Đồ Trực Quan
                                         </h5>
                                     </div>
-                                    {% comment %} <div class="dropdown mt-5 mb-3" style="display: none;">
-                                        <label id="toggle-label" for="dropdownMenuButton" class="fw-semibold ms-3">Số điểm:</label>
-                                        <button class="btn btn-primary dropdown-toggle ms-3 fw-semibold" type="button"
-                                                id="dropdownMenuButton"
-                                                style="background: #233c56;border-radius: 8px;width:161px;"
-                                                data-bs-toggle="dropdown" aria-expanded="false">
-                                            Chọn số điểm
-                                        </button>
-                                        <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                            <li><a class="dropdown-item" href="#" data-points="10">10 Points</a></li>
-                                            <li><a class="dropdown-item" href="#" data-points="20">20 Points</a></li>
-                                            <li><a class="dropdown-item" href="#" data-points="50">50 Points</a></li>
-                                        </ul>
-                                        <!-- Search Input -->
-                                        <input type="search" class="form-control ms-3 mt-3 w-25" id="searchInput" placeholder="Search...">
-                                    </div> {% endcomment %}
                                     <div id="chart-visualization" class="row">
                                     </div>
                                 </div>
@@ -249,13 +244,16 @@
                         <h4>COMPANY</h4>
                     </div>
                     <div class="row mt-2 mb-2">
-                        <a href="#" class="mt-3 fs-5 text-secondary">Home</a>
+                        <a href="#home" class="mt-3 fs-5 text-secondary">Home</a>
                     </div>
                     <div class="row mt-2 mb-2">
-                        <a href="#" class="mt-3 fs-5 text-secondary">Valuation</a>
+                        <a href="#valuation" class="mt-3 fs-5 text-secondary">Valuation</a>
                     </div>
                     <div class="row mt-2 mb-2">
-                        <a href="#" class="mt-3 fs-5 text-secondary">About us</a>
+                        <a href="#financial-report" class="mt-3 fs-5 text-secondary">Financial</a>
+                    </div>
+                    <div class="row mt-2 mb-2">
+                        <a href="#about" class="mt-3 fs-5 text-secondary">About us</a>
                     </div>
                 </div>
                 <div class="col-3">
@@ -286,10 +284,10 @@
             </div>
 
             <div class="row gx-5">
-                <div class="mt-3 col-10">
+                <div class="mt-3 col-8">
                     <p class="text-secondary">COPYRIGHT © 2023 UIT.com. Designed and Developed by UIT. </p>
                 </div>
-                <div class="col-2">
+                <div class="col-4">
                     <p class="fs-5 text-secondary">
                         Follow us
                         <img class="img-social" src="{% static 'img/f.png' %}">

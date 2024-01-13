@@ -57,15 +57,42 @@ def plot_chart(csv_file_path, title, x_title, y_title):
     fig = Figure()
 
     for column in df.columns[1:]:
-        fig.add_trace(Scatter(x=df['Quarter'], y=df[column], mode='lines+markers', name=column))
+        fig.add_trace(Scatter(x=df['Quarter'], y=df[column], mode='lines+markers', name=column,
+                              line=dict(width=3)))
 
     fig.update_layout(
-        title=title,
-        xaxis=dict(title=x_title),
-        yaxis=dict(title=y_title),
-        showlegend=True
+        template='gridon',
+        title={
+            'text': f"<b>{title}</b>",
+            'y':0.9,
+            'x':0.5,
+            'xanchor': 'center',
+            'yanchor': 'top'
+        },
+        xaxis=dict(
+            title='<i>Thời gian</i>',
+            titlefont=dict(
+                size=11
+            )
+        ),
+        yaxis=dict(
+            title='<i>Giá cổ phiếu (đơn vị: nghìn VNĐ)</i>',
+            titlefont=dict(
+                size=11
+            )
+        ),
+        margin=dict(
+            l=130,  
+            b=130,  
+        ),
+        legend_title='Legend',
+        hoverlabel=dict(
+            bgcolor="white",
+            font_size=12,
+            font_family="Rockwell"
+        ),
+        hovermode='x unified',
     )
-
     graph_html = plot(fig, output_type='div', include_plotlyjs=False)
 
     return graph_html
@@ -169,9 +196,10 @@ def plot_stock_price(ticker,npat_df,pe_df,stock_df):
     
 def plot_canslim(df_sale,df_financialRP,data_point=None,redraw=False):
     # Check on max data point
-    max_data_point_sales = len(df_sale['Sales']) - 8
-    max_data_point_eps = len(df_financialRP['EPS']) - 8
+    max_data_point_sales = helper_cs.CountDataPoints(df_sale['Sales'])
+    max_data_point_eps = helper_cs.CountDataPoints(df_financialRP['EPS'])
     max_data_point = min(max_data_point_sales, max_data_point_eps)
+    print(max_data_point)
     if data_point is None:
         data_point = max_data_point
     sales = helper_cs.GetDataPoints(df_sale['Sales'].tolist(),data_point)
@@ -411,22 +439,23 @@ def get_business_info(request):
                 'prospect': prospect
             })
 
+def get_financial_report(request):
+    if request.method == 'GET':
+        graph_html_eps = plot_chart_eps()
+        graph_html_lnst = plot_chart_lnst()
+        graph_html_fed = plot_chart_fed()
+        
+        return JsonResponse({
+            'graph_html_eps': graph_html_eps, 
+            'graph_html_lnst': graph_html_lnst, 
+            'graph_html_fed': graph_html_fed,
+        })
 
 def home(request):
-    # graph_html_eps = plot_chart_eps()
-    # graph_html_lnst = plot_chart_lnst()
-    # graph_html_fed = plot_chart_fed()
-    
     df = pd.read_csv(f'main/static/data/tickers.csv', header=None)
     df.columns = ['short_name', 'full_name','outstanding_share', 'pe_avg_industry']
     tickers = df.to_dict('records')
     # await trainModelAsync(tickers)
     return render(request, "home.html", {
-        # 'graph_html_eps': graph_html_eps, 
-        # 'graph_html_lnst': graph_html_lnst, 
-        # 'graph_html_fed': graph_html_fed, 
         'tickers': tickers
     })
-
-# shares_outstanding = 2089955445.00
-#     pe_avg_industry = 33.46

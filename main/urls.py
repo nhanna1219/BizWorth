@@ -7,6 +7,7 @@ urlpatterns = [
     path('get_ticker_chart/', views.get_ticker_chart, name='get_ticker_chart'),
     path('update_canslim_point/', views.update_canslim_point, name='update_canslim_point'),
     path('update_mx4_point/', views.update_mx4_point, name='update_mx4_point'),
-    path('get_business_info/', views.get_business_info, name='get_business_info')
+    path('get_business_info/', views.get_business_info, name='get_business_info'),
+    path('get_financial_report/', views.get_financial_report, name='get_financial_report')
     # path('get_ticker_chart/', views.get_ticker_chart, name='get_ticker_chart'),
 ]

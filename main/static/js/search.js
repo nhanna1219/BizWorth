@@ -44,20 +44,23 @@ function inputHandler(){
             dropdownArray.forEach(dropdown => {
                 dropdown.classList.add('closed');
             });
+
+            // Fix chart scaling 
+            document.getElementById('valuation').style.display = ''; 
+            document.getElementById('financial-report').style.display = 'none';
             await Promise.all([
                 getBusinessInfo(ticker),
                 getTickerVisualization(ticker)
             ]);
+
+            document.getElementById('valuation').scrollIntoView();
             // Save ticker name to session
             sessionStorage.setItem('selectedTicker', ticker);
-
-            document.getElementById('valuation').style.display = ''; 
-            document.getElementById('valuation').scrollIntoView();
         });
     })
 
     inputField.addEventListener('focus', () => {
-        inputField.placeholder = 'Type to filter...';
+        inputField.placeholder = 'Gõ để lọc cổ phiếu...';
         inputField.style = "border-radius:15px 15px 0 0;"
         dropdown.classList.add('open');
         dropdownArray.forEach(dropdown => {
@@ -68,7 +71,7 @@ function inputHandler(){
 
     inputField.addEventListener('blur', () => {
         inputField.style = "";
-        inputField.placeholder = 'Choose Your Ticker';
+        inputField.placeholder = 'Chọn cổ phiếu';
         if (inputField.value.trim() !== "")
             inputField.style = "font-weight: 600;";
         closeDropdown();
@@ -244,7 +247,12 @@ async function getBusinessInfo(ticker){
                 element.innerHTML = section.content;
             }
         });
-        
+
+        // Clear the content on first load
+        var elements = document.querySelectorAll('[data-original-content]');
+        elements.forEach(function(element) {
+            element.setAttribute('data-original-content', '');
+        });
         readMoreNLess();
     } catch (error){
         console.log('Error at getBusinessInfor()',error);
@@ -271,6 +279,7 @@ async function getTickerVisualization(ticker){
         let canslimDataPoint = 20;
         let mx4DataPoint = 10;
         container.innerHTML = '';
+
         for (let obj in res){
             if (obj === 'cs_max_data_point') {
                 canslimDataPoint = res[obj];
@@ -289,7 +298,6 @@ async function getTickerVisualization(ticker){
             }
         }
         addDropdowns(canslimDataPoint, mx4DataPoint);
-
     } catch (error) {
         console.error('Error:', error);
     }
@@ -318,6 +326,7 @@ function initializeSelectInstance(selector, maxPoints, updateDataPointFunction) 
                     options.push({id: i, title: `${i} điểm`});
                 }
                 callback(options);
+                selectInstance.setValue(maxPoints);
             },
             onItemAdd: (value) => {
                 updateDataPointFunction(parseInt(value, 10));
@@ -405,8 +414,81 @@ function readMoreNLess() {
     });
 }
 
+function onValuationClick() {
+    const valuationNav = document.getElementById('valuation-nav-btn');
+    valuationNav.addEventListener('click', () => {
 
+        const selectedTicker = sessionStorage.getItem('selectedTicker');
+        const inputElement = document.querySelector('.chosen-value');
+
+        if (!selectedTicker) {
+            setTimeout(() => {
+                inputElement.focus();
+            }, 100);
+        } else {
+            // getTickerVisualization(selectedTicker);
+            const textValue = document.querySelector(`[data-value="${selectedTicker}"`).innerText;
+            inputElement.value = textValue;
+            document.getElementById('financial-report').style.display = 'none';
+            document.getElementById('valuation').style.display = '';
+        }
+    });
+}
+
+function get_financial_report() {
+    const financialBtn = document.getElementById('financial-nav-btn');
+    financialBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const inputElement = document.querySelector('.chosen-value');
+        const valuation = document.getElementById('valuation');
+
+        valuation.style.display = 'none';
+        inputElement.value = '';
+        const financialContainer = document.getElementById('financial-report');
+        financialContainer.style.display = '';
+        const response = await fetch('http://127.0.0.1:8000/get_financial_report/', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        const data = await response.json();
+        if (data) {
+            document.getElementById('eps-chart-container').innerHTML = data.graph_html_eps;
+            document.getElementById('lnst-chart-container').innerHTML = data.graph_html_lnst;
+            document.getElementById('fed-chart-container').innerHTML = data.graph_html_fed;
+        }   
+        const scripts = financialContainer.querySelectorAll('script');
+        if (scripts) {
+            for (let script of scripts){
+                const scriptContent = script.textContent || script.innerText;
+                new Function(scriptContent)();
+            }
+        }
+        financialContainer.scrollIntoView();
+    });
+}
+
+function scrollToTop() {
+    var btn = document.getElementById('btn-back-to-top');
+    btn.addEventListener('click', () => {
+        document.body.scrollTop = 0;
+        document.documentElement.scrollTop = 0;
+    });
+}
+window.onscroll = function () {
+    var btnScrollToTop = document.getElementById('btn-back-to-top');
+    if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
+        btnScrollToTop.style.display = "block";
+    } else {
+        btnScrollToTop.style.display = "none";
+    }
+};
 
 document.addEventListener('DOMContentLoaded', function () {
+    sessionStorage.setItem('selectedTicker', '')
+    get_financial_report();
+    onValuationClick();
     inputHandler();
+    scrollToTop();
 });
