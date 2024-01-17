@@ -25,7 +25,6 @@ class CanslimHelper:
     def __CalTTMRate(self, value):
         if len(value) != 8:
             raise ValueError("Value must be a list of 8 numbers")
-
         return sum(value[4:8]) / sum(value[0:4]) - 1
         
     def __CalScore(self, value, index):        

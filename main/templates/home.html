@@ -18,7 +18,15 @@
     <script src="https://kit.fontawesome.com/3518e7db2c.js" crossorigin="anonymous"></script>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ag-grid-community/dist/ag-grid-community.min.js"></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js"
+      integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj"
+      crossorigin="anonymous"
+    ></script>
     <script src="{% static 'js/search.js' %}"></script>
+    <script src="{% static 'js/table.js' %}"></script>
+    <script src="{% static 'js/component.js' %}"></script>
     <title>BizWorth</title>
 </head>
 
@@ -104,6 +112,24 @@
                                     <div id="lnst-chart-container" class="row"></div>
                                     <hr class="hr hr-blurry mt-3 mb-4"/>
                                     <div id="fed-chart-container" class="row"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mb-3 mt-3">
+                    <div class="col">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="card-title d-flex align-items-center">
+                                    <img src="{% static 'img/financial-statement.png' %}" width="30"
+                                        height="30">
+                                    <h5 class="px-4" style="line-height: 40px;">
+                                        So Sánh Chỉ Số Tài Chính
+                                    </h5>
+                                </div>
+                                <div class="financial-figure">
+                                    <div id="financial-tbl" class="row mt-4"></div>
                                 </div>
                             </div>
                         </div>
@@ -203,16 +229,34 @@
                         </div>
                     </div>
                     {% comment %} Advice and Tips {% endcomment %}
-                    <div class="row mb-3 mt-3">
+                    <div class="row mb-3 mt-3" style="">
                         <div class="col">
-                            <div class="card text-bg-light" style="height: 24rem;">
+                            <div class="card text-bg-light" style="">
                                 <div class="card-body">
-                                    <div class="card-title d-flex align-items-center">
+                                    <div class="card-title d-flex align-items-center mb-4">
                                         <img src="{% static 'img/tips.png' %}" width="30" height="30">
                                         <h5 class="px-4 fs-3" style="line-height: 40px;">
-                                            Lời Khuyên
+                                            Phân Tích
                                         </h5>
                                     </div>
+                                    <div class="title"><h4 style="font-weight: 700">EPS (Earning Per Share)</h4></div>
+                                    <div id="eps_analysis"> </div>
+                                    <hr class="hr hr-blurry mt-3 mb-4"/>
+                                    
+                                    <div class="title"><h4 style="font-weight: 700">Doanh Thu</h4></div>
+                                    <div id="sales_analysis"> </div>
+                                    
+                                    <hr class="hr hr-blurry mt-3 mb-4"/>
+                                    <div class="title"><h4 style="font-weight: 700">Lợi Nhuận Sau Thuế</h4></div>
+                                    <div id="npat_analysis"> </div>
+
+                                    <hr class="hr hr-blurry mt-3 mb-4"/>
+                                    <div class="title"><h4 style="font-weight: 700">Bảng Cân Đối Kế Toán</h4></div>
+                                    <div id="balance_sheet"> </div>
+
+                                    <hr class="hr hr-blurry mt-3 mb-4"/>
+                                    <div class="title"><h4 style="font-weight: 700">Kết Quả Hoạt Động Kinh Doanh</h4></div>
+                                    <div id="operation_result"> </div>
                                 </div>
                             </div>
                         </div>

@@ -196,11 +196,20 @@ p {
 
 .dropdown-menu{
     padding: 0;
+    border: 1px solid black;
+    
 }
 .dropdown-item:focus, .dropdown-item:hover {
     color: white;
     background-color: #233c56;
 }
+
+#dropdownEPS, #dropdownSales, #dropdownNpat, .dropdown-toggle-split, #dropdownBS, .dropdown-toggle-split:hover{
+    color: white !important;
+    background-color: #233c56 !important;
+    border: none;
+} 
+
 
 .dropdown-menu {
     max-height: 200px;
@@ -235,4 +244,22 @@ ul.styled-list li {
 
 .card-body {
     background: #eceff1;
+}
+
+.ag-theme-alpine {
+    --ag-font-size: 17px;
+    --ag-font-family: Sans-serif;
+}
+
+.ag-header-group-cell{
+    justify-content: center;
+}
+
+.ag-header-cell-label, .ag-header-group-cell-label {
+    justify-content: center;
+}
+
+.title {
+    text-align: center;
+    color: #353637;
 }

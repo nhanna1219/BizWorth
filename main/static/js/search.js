@@ -39,7 +39,8 @@ function inputHandler(){
     dropdownArray.forEach(item => {
         item.addEventListener('click', async (evt) => {
             const ticker = item.getAttribute('data-value');
-            
+            await setDataframe(ticker);
+
             inputField.value = item.textContent;
             dropdownArray.forEach(dropdown => {
                 dropdown.classList.add('closed');
@@ -48,9 +49,13 @@ function inputHandler(){
             // Fix chart scaling 
             document.getElementById('valuation').style.display = ''; 
             document.getElementById('financial-report').style.display = 'none';
+            
             await Promise.all([
                 getBusinessInfo(ticker),
-                getTickerVisualization(ticker)
+                getTickerVisualization(ticker),
+                generateRateTableComponent(),
+                generateBalanceSheet(),
+                generateOperationResult()
             ]);
 
             document.getElementById('valuation').scrollIntoView();
@@ -77,6 +82,21 @@ function inputHandler(){
         closeDropdown();
     });
 }
+
+
+async function setDataframe(ticker){
+    let content = {
+        "ticker": ticker
+    };
+    const res = await fetch ('http://127.0.0.1:8000/read_all_csv/', {
+        method: "POST",
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(content)
+    })
+}
+
 async function updateCanslimDataPoint(numberOfPoints){
     let data = { 'data_point': numberOfPoints };
     try {
@@ -238,13 +258,19 @@ async function getBusinessInfo(ticker){
             
             // Clear the innerHTML
             element.innerHTML = '';
-        
+
+            // Remove the read mode
+            var readMode = element.nextSibling.cloneNode();
+            element.nextSibling.remove();
+
             if (index === 0) {
                 const pElement = document.createElement('p');
                 pElement.innerHTML = section.content;
                 element.append(pElement);
+                element.parentElement.append(readMode);
             } else {
                 element.innerHTML = section.content;
+                element.parentElement.append(readMode);
             }
         });
 
@@ -400,8 +426,9 @@ function readMoreNLess() {
         } else {
             element.style.display = 'none';
         }
-
-        element.addEventListener('click', function() {
+        $(element).off('click', toggleReadMode);
+        $(element).on('click', toggleReadMode);
+        function toggleReadMode() {
             if (this.innerText === 'Đọc Thêm') {
                 contentElement.innerHTML = originalContent;
                 this.innerText = 'Thu Gọn';
@@ -410,7 +437,7 @@ function readMoreNLess() {
                 contentElement.innerHTML = truncatedText;
                 this.innerText = 'Đọc Thêm';
             }
-        });
+        }
     });
 }
 

@@ -1,4 +1,5 @@
 from datetime import datetime
+import threading
 from plotly.graph_objs import Scatter, Layout, Figure
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
@@ -7,6 +8,7 @@ from plotly.offline import plot
 from main.modules import forecast
 from django.shortcuts import render
 from main.modules import pe, mx4, canslim
+from main.modules import format_json as fmt
 from main.common import const
 import pandas as pd
 import random
@@ -15,6 +17,7 @@ import os
 import time
 import asyncio
 import requests
+import re
 
 helper_PE = pe.PEHelper()
 helper_cs = canslim.CanslimHelper()
@@ -116,7 +119,8 @@ async def train_single_model_async(ticker):
         
 def plot_stock_price(ticker,npat_df,pe_df,stock_df):
     # Load the dataset containing Net Profit After Tax (NPAT) by quarter
-    helper_forcast.SetDataFrame(npat_df)
+    npat_df_copy = npat_df.copy()
+    helper_forcast.SetDataFrame(npat_df_copy)
     helper_forcast.FormatDate(const.DATE_MODE)
     # helper_forcast.GenerateModel(10, 10)
     # helper_forcast.SaveModel("main/static/data/_model/", f"NPAT_Model_{ticker}") 
@@ -126,10 +130,10 @@ def plot_stock_price(ticker,npat_df,pe_df,stock_df):
     current_year = datetime.now().year
 
     # Get current year's NPAT data
-    npat_current = npat_df[npat_df['Date'].dt.year == current_year]
+    npat_current = npat_df_copy[npat_df_copy['Date'].dt.year == current_year]
     if npat_current.empty:
         current_year -= 1
-        npat_current = npat_df[npat_df['Date'].dt.year == (current_year)]
+        npat_current = npat_df_copy[npat_df_copy['Date'].dt.year == (current_year)]
         
     df_forcast = helper_forcast.Forecast(12 - len(npat_current), const.DATE_MODE)
     df_concat = pd.concat([npat_df, df_forcast])
@@ -199,7 +203,6 @@ def plot_canslim(df_sale,df_financialRP,data_point=None,redraw=False):
     max_data_point_sales = helper_cs.CountDataPoints(df_sale['Sales'])
     max_data_point_eps = helper_cs.CountDataPoints(df_financialRP['EPS'])
     max_data_point = min(max_data_point_sales, max_data_point_eps)
-    print(max_data_point)
     if data_point is None:
         data_point = max_data_point
     sales = helper_cs.GetDataPoints(df_sale['Sales'].tolist(),data_point)
@@ -358,13 +361,24 @@ def plot_4m(sale_df,financial_df,npat_df,opc_df,data_point=None,redraw=False):
         return graph_html, max_data_point
 
 @csrf_exempt
+def read_all_csv(request):
+    global tickerData
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        ticker = data.get('ticker')
+        tickerData = TickerData(read_files_for_ticker(ticker))
+        return JsonResponse({
+            "success": "True"
+        })
+    
+
+@csrf_exempt
 def get_ticker_chart(request):
     # FinancialReport_Q, FinancialReport_Y,NPAT_Q,NPAT_Y,Sales_Q,Sales_Y,StockPrice,opc
     global tickerData
     if request.method == 'POST':
         data = json.loads(request.body)
         ticker = data.get('ticker')
-        tickerData = TickerData(read_files_for_ticker(ticker))
         graph_stock_pred = plot_stock_price(ticker, npat_df=tickerData.NPAT_Q, pe_df=tickerData.FinancialReport_Y, stock_df=tickerData.StockPrice)
         graph_canslim_score, cs_max_data_point = plot_canslim(df_sale=tickerData.Sales_Q,df_financialRP=tickerData.FinancialReport_Q)
         graph_4m_score, mx4_max_data_point = plot_4m(sale_df=tickerData.Sales_Y, financial_df=tickerData.FinancialReport_Y, npat_df=tickerData.NPAT_Y, opc_df=tickerData.opc)
@@ -439,6 +453,7 @@ def get_business_info(request):
                 'prospect': prospect
             })
 
+@csrf_exempt
 def get_financial_report(request):
     if request.method == 'GET':
         graph_html_eps = plot_chart_eps()
@@ -451,10 +466,190 @@ def get_financial_report(request):
             'graph_html_fed': graph_html_fed,
         })
 
+@csrf_exempt
+def get_rate_table(request):
+    global tickerData
+    if request.method == 'POST':
+        frqDF = tickerData.FinancialReport_Q
+        npatDF = tickerData.NPAT_Q
+        saleDF = tickerData.Sales_Q
+        
+        dropdown_json = get_dropdown_rate_tbl(frqDF, npatDF, saleDF)
+        
+        frqDF = frqDF[["Duration", "EPS"]]
+        convert_format = lambda x: re.sub(r"(\d+) - Q(\d+)", r"Q\2/\1", x)
+        frqDF["Duration"] = frqDF["Duration"].apply(convert_format)
+        yearsFrq, resfrqDF = fmt.FormatRateDF(frqDF)
+        resfrqDF = fmt.SplitRateDF(resfrqDF, yearsFrq[-1])
+        jsonfrq = fmt.FormatRateTable(resfrqDF)
+        
+        yearsNpat, resNpatDF = fmt.FormatRateDF(npatDF)
+        resNpatDF = fmt.SplitRateDF(resNpatDF, yearsNpat[-1])
+        jsonNpat = fmt.FormatRateTable(resNpatDF)
+        
+        saleDF["Sales"] = saleDF["Sales"].astype(float)
+        yearsSales, resSaleDF = fmt.FormatRateDF(saleDF)
+        resSaleDF = fmt.SplitRateDF(resSaleDF, yearsSales[-1])
+        jsonSale = fmt.FormatRateTable(resSaleDF)
+        
+        return JsonResponse(
+            {
+                "dropdown_json": dropdown_json,
+                "frq_years": jsonfrq[0],
+                "frq_data": jsonfrq[1],
+                "npat_years": jsonNpat[0],
+                "npat_data": jsonNpat[1],
+                "sales_years": jsonSale[0],
+                "sales_data": jsonSale[1],
+            }, safe=False)
+        
+def get_dropdown_rate_tbl(frqDF, npatDF, saleDF):
+    frqDF = frqDF[["Duration", "EPS"]]
+    convert_format = lambda x: re.sub(r"(\d+) - Q(\d+)", r"Q\2/\1", x)
+    frqDF["Duration"] = frqDF["Duration"].apply(convert_format)
+    
+    yearsFrq, _ = fmt.FormatRateDF(frqDF)
+    
+    yearsNpat, _ = fmt.FormatRateDF(npatDF)
+    
+    yearsSales, _ = fmt.FormatRateDF(saleDF)
+    return{
+            "yearsFrq": yearsFrq.tolist(),
+            "yearsNpat": yearsNpat.tolist(),
+            "yearsSales": yearsSales.tolist(),
+        }
+  
+@csrf_exempt  
+def filter_data_tbl(request):
+    global tickerData
+    if request.method == 'POST':
+        frqDF = tickerData.FinancialReport_Q
+        npatDF = tickerData.NPAT_Q
+        saleDF = tickerData.Sales_Q
+
+        data = json.loads(request.body)
+        btnId = data.get('btnId')
+        selectedYear = data.get('selectedYear')
+        
+        if btnId == 'dropdownEPS':
+            frqDF = frqDF[["Duration", "EPS"]]
+            convert_format = lambda x: re.sub(r"(\d+) - Q(\d+)", r"Q\2/\1", x)
+            frqDF["Duration"] = frqDF["Duration"].apply(convert_format)
+            yearsFrq, resfrqDF = fmt.FormatRateDF(frqDF)
+            resfrqDF = fmt.SplitRateDF(resfrqDF, selectedYear)
+            jsonData = fmt.FormatRateTable(resfrqDF)
+        elif btnId == 'dropdownNpat':
+            yearsNpat, resNpatDF = fmt.FormatRateDF(npatDF)
+            resNpatDF = fmt.SplitRateDF(resNpatDF, selectedYear)
+            jsonData = fmt.FormatRateTable(resNpatDF)
+            
+        elif btnId == 'dropdownSales':
+            yearsSales, resSaleDF = fmt.FormatRateDF(saleDF)
+            resSaleDF = fmt.SplitRateDF(resSaleDF, selectedYear)
+            jsonData = fmt.FormatRateTable(resSaleDF)
+        
+        return JsonResponse(
+            {
+                "years": jsonData[0],
+                "data": jsonData[1]
+            })
+
+@csrf_exempt 
+def get_balance_sheet(request):
+    global tickerData
+    if request.method == "POST":
+        balance_sheet = tickerData.balanceSheet
+        
+        time, bsDF = fmt.FormatBSDF(balance_sheet)
+        bsDF = fmt.SplitBSDF(bsDF, time[-1])
+        bsDF[time[-1]] = bsDF[time[-1]].astype(float) 
+        bsDF["Color"] = bsDF["Color"].astype(float)
+        jsonData = fmt.FormatBSTable(bsDF)
+        
+        return JsonResponse(
+            {
+                "years": time,
+                "data": jsonData,
+            }, safe=False)
+   
+@csrf_exempt      
+def filter_balance_sheet(request):
+    global tickerData
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        selectedYear = data.get('selectedYear')
+        time, bsDF = fmt.FormatBSDF(tickerData.balanceSheet)
+        bsDF = fmt.SplitBSDF(bsDF, selectedYear)
+        bsDF[selectedYear] = bsDF[selectedYear].astype(float) 
+        bsDF["Color"] = bsDF["Color"].astype(float)
+        jsonData = fmt.FormatBSTable(bsDF)
+        
+        return JsonResponse(
+            {
+                "data": jsonData
+            })
+
+@csrf_exempt      
+def get_operation_result(request):
+    global tickerData
+    if request.method == "POST":
+        operation_result = tickerData.businessOperationResult
+        money_exchange = tickerData.moneyExchange
+        
+        return JsonResponse(
+            {
+            }, safe=False)
+        
+@csrf_exempt      
+def filter_operation_result(request):
+    global tickerData
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        selectedYear = data.get('selectedYear')
+        
+        return JsonResponse(
+            {
+
+            })
+        
+@csrf_exempt      
+def get_financial_fig(request):
+    if request.method == "POST":
+        tickersData = []
+        df = pd.read_csv(f'main/static/data/tickers.csv', header=None)
+        df.columns = ['short_name', 'full_name','outstanding_share', 'pe_avg_industry']
+        tickers = df.to_dict('records')
+        for ticker in tickers:
+            tickersData.append(TickerData(read_files_for_ticker(ticker["short_name"])))
+        
+        return JsonResponse(
+            {
+            }, safe=False)
+        
+@csrf_exempt      
+def filter_financial_fig(request):
+    global tickerData
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        selectedQuarter = data.get('selectedQuarter')
+        
+        tickersData = []
+        df = pd.read_csv(f'main/static/data/tickers.csv', header=None)
+        df.columns = ['short_name', 'full_name','outstanding_share', 'pe_avg_industry']
+        tickers = df.to_dict('records')
+        for ticker in tickers:
+            tickersData.append(TickerData(read_files_for_ticker(ticker["short_name"])))
+        
+        return JsonResponse(
+            {
+                
+            })
+
 def home(request):
     df = pd.read_csv(f'main/static/data/tickers.csv', header=None)
     df.columns = ['short_name', 'full_name','outstanding_share', 'pe_avg_industry']
     tickers = df.to_dict('records')
+    
     # await trainModelAsync(tickers)
     return render(request, "home.html", {
         'tickers': tickers
