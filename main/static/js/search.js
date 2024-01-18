@@ -57,6 +57,15 @@ function inputHandler(){
                 generateBalanceSheet(),
                 generateOperationResult()
             ]);
+            document.querySelectorAll('.ag-theme-quartz-dark').forEach((tbl,index) => {
+                if (index !== 3){
+                    tbl.style.height = '286px';
+                } else {
+                    tbl.style.height = '682px';
+                }
+                
+            });
+
 
             document.getElementById('valuation').scrollIntoView();
             // Save ticker name to session

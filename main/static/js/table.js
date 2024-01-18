@@ -72,18 +72,49 @@ async function requestORData(grid, selectedYear) {
 }
 
 // Constructor and Update Functions
-function createGridInstance(id) {
+function createGridInstance(id,expandFirstCol=false) {
   // return agGrid.createGrid(document.querySelector("#" + id), {});
   let element = document.querySelector("#" + id);
-  let grid = agGrid.createGrid(element, {});
+  let gridOptions;
+  if (expandFirstCol){
+    gridOptions = {
+      onGridReady: function (params) {
+        var columnIdsToAutoSize = [];
+        var allDisplayedColumns = params.api.getAllDisplayedColumns();
+
+        columnIdsToAutoSize.push(allDisplayedColumns[0].getColId());
+        columnIdsToAutoSize.push(allDisplayedColumns[3].getColId());
+
+        params.api.autoSizeColumns(columnIdsToAutoSize);
+        
+      }
+    };
+  }
+  else {
+    gridOptions = {
+      onGridReady: function(params) {
+        params.api.sizeColumnsToFit();
+      }
+    }
+  }
+  
+  let grid = agGrid.createGrid(element, gridOptions);
   element.__ag_grid_instance = grid;
   return grid;
 }
 
-function updateTable(grid, data, columnDefs) {
+function updateTable(grid, data, columnDefs, expandFirstCol=false) {
   grid.setGridOption("columnDefs", columnDefs);
   grid.setGridOption("rowData", data);
   grid.setGridOption("rowDragManaged", true);
+  if (expandFirstCol) {
+    var allDisplayedColumns = grid.columnApi.getAllDisplayedColumns();
+    columnIdsToAutoSize.push(allDisplayedColumns[0].getColId());
+    columnIdsToAutoSize.push(allDisplayedColumns[3].getColId());
+    grid.autoSizeColumns(columnIdsToAutoSize);
+  } else {
+    grid.sizeColumnsToFit();
+  }
 }
 
 // Rate Table Helpers
@@ -121,11 +152,11 @@ function generateRateTableDef(years) {
           autoHeight: true,
           cellStyle: (params) => {
             if (params.value < 0) {
-              return { color: "red" };
+              return { color: "red", fontWeight: "500" };
             }
 
             if (params.value > 0) {
-              return { color: "green" };
+              return { color: "#22cd22", fontWeight: "500" };
             }
 
             return null;
@@ -183,11 +214,11 @@ function generateBSTableDef() {
             }
 
             if (params.value.c == 1) {
-              return { background: "green" };
+              return { color: "#22cd22", fontWeight: "500" };
             }
 
             if (params.value.c == -1) {
-              return { background: "red" };
+              return { color: "red", fontWeight: "500" };
             }
 
             return null;
@@ -222,11 +253,11 @@ function generateBSTableDef() {
             }
 
             if (params.value.c == 1) {
-              return { background: "green" };
+              return { color: "#22cd22", fontWeight: "500" };
             }
 
             if (params.value.c == -1) {
-              return { background: "red" };
+              return { color: "red", fontWeight: "500" };
             }
 
             return null;

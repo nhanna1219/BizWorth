@@ -95,7 +95,7 @@ async function generateRateTableComponent() {
 
       let table = document.createElement("div");
       table.id = tableId;
-      table.className = "ag-theme-alpine";
+      table.className = "ag-theme-quartz-dark";
       table.style.cssText = "height: 400px; width: 100%;";
 
       container.appendChild(dropdownContainer);
@@ -207,14 +207,14 @@ async function generateBalanceSheet() {
 
     let table = document.createElement("div");
     table.id = tableId;
-    table.className = "ag-theme-alpine";
+    table.className = "ag-theme-quartz-dark";
     table.style.cssText = "height: 400px; width: 100%;";
 
     container.appendChild(dropdownContainer);
     container.appendChild(space);
     container.appendChild(table);
 
-    let gridInstance = createGridInstance(tableId);
+    let gridInstance = createGridInstance(tableId, true);
 
     updateTable(
       gridInstance,
@@ -303,7 +303,7 @@ async function generateOperationResult() {
 
     let table = document.createElement("div");
     table.id = tableId;
-    table.className = "ag-theme-alpine";
+    table.className = "ag-theme-quartz-dark";
     table.style.cssText = "height: 400px; width: 100%;";
 
     container.appendChild(dropdownContainer);
@@ -399,7 +399,7 @@ async function generateFinancialFig() {
 
     let table = document.createElement("div");
     table.id = tableId;
-    table.className = "ag-theme-alpine";
+    table.className = "ag-theme-quartz-dark";
     table.style.cssText = "height: 400px; width: 100%;";
 
     container.appendChild(dropdownContainer);

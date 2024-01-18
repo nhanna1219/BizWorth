@@ -64,6 +64,12 @@ def SplitRateDF(data, start):
 
     return df.iloc[startIndex : endIndex + 1]
 
+def MoneyFormat(num):
+    if pd.isna(num):
+        return None
+    else:
+        # return "{:,.2f}".format(num).replace(",", "X").replace(".", ",").replace("X", ".")
+        return num
 
 def FormatRateTable(data):
     if not isinstance(data, pd.DataFrame):
@@ -94,22 +100,22 @@ def FormatRateTable(data):
         if i + 3 > maxDF - 1:
             for j in range(i, maxDF):
                 if j - i == 0:
-                    q1[year + " value"] = data[data.columns[1]].iloc[j]
+                    q1[year + " value"] = MoneyFormat(data[data.columns[1]].iloc[j])
                     q1[year + " rate"] = data[data.columns[2]].iloc[j]
                 elif j - i == 1:
-                    q2[year + " value"] = data[data.columns[1]].iloc[j]
+                    q2[year + " value"] = MoneyFormat(data[data.columns[1]].iloc[j])
                     q2[year + " rate"] = data[data.columns[2]].iloc[j]
                 elif j - i == 2:
-                    q3[year + " value"] = data[data.columns[1]].iloc[j]
+                    q3[year + " value"] = MoneyFormat(data[data.columns[1]].iloc[j])
                     q3[year + " rate"] = data[data.columns[2]].iloc[j]
         else:
-            q1[year + " value"] = data[data.columns[1]].iloc[i]
+            q1[year + " value"] = MoneyFormat(data[data.columns[1]].iloc[i])
             q1[year + " rate"] = data[data.columns[2]].iloc[i]
-            q2[year + " value"] = data[data.columns[1]].iloc[i + 1]
+            q2[year + " value"] = MoneyFormat(data[data.columns[1]].iloc[i + 1])
             q2[year + " rate"] = data[data.columns[2]].iloc[i + 1]
-            q3[year + " value"] = data[data.columns[1]].iloc[i + 2]
+            q3[year + " value"] = MoneyFormat(data[data.columns[1]].iloc[i + 2])
             q3[year + " rate"] = data[data.columns[2]].iloc[i + 2]
-            q4[year + " value"] = data[data.columns[1]].iloc[i + 3]
+            q4[year + " value"] = MoneyFormat(data[data.columns[1]].iloc[i + 3])
             q4[year + " rate"] = data[data.columns[2]].iloc[i + 3]
 
     return [header, jsonData]

@@ -246,9 +246,9 @@ ul.styled-list li {
     background: #eceff1;
 }
 
-.ag-theme-alpine {
+.ag-theme-quartz-black {
     --ag-font-size: 17px;
-    --ag-font-family: Sans-serif;
+    --ag-font-family: Roboto,sans-serif;
 }
 
 .ag-header-group-cell{
@@ -257,6 +257,13 @@ ul.styled-list li {
 
 .ag-header-cell-label, .ag-header-group-cell-label {
     justify-content: center;
+}
+
+.ag-row-animation .ag-row{
+    background-color: #090912;
+}
+.ag-header.ag-focus-managed.ag-pivot-off.ag-header-allow-overflow{
+    background-color: #131b25;
 }
 
 .title {
