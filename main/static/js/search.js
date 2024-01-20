@@ -13,7 +13,7 @@ function inputHandler(){
         setTimeout(() => {
             dropdown.classList.remove('open');
             backdrop.style.display = 'none';
-        }, 100); 
+        }, 200); 
     }
 
     inputField.addEventListener('input', (e) => {
