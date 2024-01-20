@@ -38,37 +38,51 @@ function inputHandler(){
     // Click on Ticker Event
     dropdownArray.forEach(item => {
         item.addEventListener('click', async (evt) => {
-            const ticker = item.getAttribute('data-value');
-            await setDataframe(ticker);
+            Swal.fire({
+                title: "Đang xử lý...",
+                html: '<p>Bạn vui lòng chờ phân tích dữ liệu vài giây nhé! 🐱‍🏍</p>',
+                timerProgressBar: true,
+                didOpen: async() => {
+                    Swal.showLoading();
+                    const ticker = item.getAttribute('data-value');
+                    await setDataframe(ticker);
 
-            inputField.value = item.textContent;
-            dropdownArray.forEach(dropdown => {
-                dropdown.classList.add('closed');
+                    inputField.value = item.textContent;
+                    dropdownArray.forEach(dropdown => {
+                        dropdown.classList.add('closed');
+                    });
+
+                    // Fix chart scaling 
+                    document.getElementById('valuation').style.display = '';
+                    document.getElementById('financial-report').style.display = 'none';
+
+                    await Promise.all([
+                        getBusinessInfo(ticker),
+                        getTickerVisualization(ticker),
+                        generateRateTableComponent(),
+                        generateBalanceSheet(),
+                        generateOperationResult()
+                    ]);
+                    Swal.close();
+                    
+                    document.querySelectorAll('.ag-theme-quartz-dark').forEach((tbl, index) => {
+                        if (index < 3) {
+                            tbl.style.height = '286px';
+                        } else {
+                            tbl.style.height = '682px';
+                        }
+                    });
+                    setTimeout(() => {
+                        document.getElementById('valuation').scrollIntoView();
+                    },300)
+                    // Save ticker name to session
+                    sessionStorage.setItem('selectedTicker', ticker);
+                },
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                showConfirmButton: false,
+                icon: 'info'
             });
-
-            // Fix chart scaling 
-            document.getElementById('valuation').style.display = ''; 
-            document.getElementById('financial-report').style.display = 'none';
-            
-            await Promise.all([
-                getBusinessInfo(ticker),
-                getTickerVisualization(ticker),
-                generateRateTableComponent(),
-                generateBalanceSheet(),
-                generateOperationResult()
-            ]);
-            document.querySelectorAll('.ag-theme-quartz-dark').forEach((tbl,index) => {
-                if (index < 3){
-                    tbl.style.height = '286px';
-                } else {
-                    tbl.style.height = '682px';
-                }
-            });
-
-
-            document.getElementById('valuation').scrollIntoView();
-            // Save ticker name to session
-            sessionStorage.setItem('selectedTicker', ticker);
         });
     })
 
@@ -487,34 +501,53 @@ function get_financial_report() {
     const financialBtn = document.getElementById('financial-nav-btn');
     financialBtn.addEventListener('click', async (e) => {
         e.preventDefault();
-        const inputElement = document.querySelector('.chosen-value');
-        const valuation = document.getElementById('valuation');
-
-        valuation.style.display = 'none';
-        inputElement.value = '';
         const financialContainer = document.getElementById('financial-report');
-        financialContainer.style.display = '';
-        const response = await fetch('http://127.0.0.1:8000/get_financial_report/', {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
-        const data = await response.json();
-        if (data) {
-            document.getElementById('eps-chart-container').innerHTML = data.graph_html_eps;
-            document.getElementById('lnst-chart-container').innerHTML = data.graph_html_lnst;
-            document.getElementById('fed-chart-container').innerHTML = data.graph_html_fed;
-        }   
-        const scripts = financialContainer.querySelectorAll('script');
-        if (scripts) {
-            for (let script of scripts){
-                const scriptContent = script.textContent || script.innerText;
-                new Function(scriptContent)();
-            }
+        if (financialContainer.style.display == '') {
+            financialContainer.scrollIntoView();
+        } else {
+            Swal.fire({
+                title: "Đang xử lý...",
+                html: '<p>Bạn vui lòng chờ phân tích dữ liệu vài giây nhé! 🐱‍🏍</p>',
+                timerProgressBar: true,
+                didOpen: async () => {
+                    Swal.showLoading();
+                    const inputElement = document.querySelector('.chosen-value');
+                    const valuation = document.getElementById('valuation');
+    
+                    valuation.style.display = 'none';
+                    inputElement.value = '';
+                    financialContainer.style.display = '';
+                    const response = await fetch('http://127.0.0.1:8000/get_financial_report/', {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    const data = await response.json();
+                    if (data) {
+                        document.getElementById('eps-chart-container').innerHTML = data.graph_html_eps;
+                        document.getElementById('lnst-chart-container').innerHTML = data.graph_html_lnst;
+                        document.getElementById('fed-chart-container').innerHTML = data.graph_html_fed;
+                    }
+                    const scripts = financialContainer.querySelectorAll('script');
+                    if (scripts) {
+                        for (let script of scripts) {
+                            const scriptContent = script.textContent || script.innerText;
+                            new Function(scriptContent)();
+                        }
+                    }
+                    generateFinancialFig();
+                    Swal.close();
+                    setTimeout(() => {
+                        financialContainer.scrollIntoView();
+                    }, 400);
+                },
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                showConfirmButton: false,
+                icon: 'info'
+            });
         }
-        generateFinancialFig();
-        financialContainer.scrollIntoView();
     });
 }
 

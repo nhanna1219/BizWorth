@@ -216,7 +216,7 @@ async function generateBalanceSheet() {
     container.appendChild(space);
     container.appendChild(table);
 
-    let gridInstance = createGridInstance(tableId, false,true);
+    let gridInstance = createGridInstance(tableId, true);
 
     updateTable(
       gridInstance,
@@ -311,7 +311,7 @@ async function generateOperationResult() {
     container.appendChild(space);
     container.appendChild(table);
 
-    let gridInstance = createGridInstance(tableId, true);
+    let gridInstance = createGridInstance(tableId, false,false);
 
     updateTable(
       gridInstance,
@@ -341,7 +341,6 @@ async function generateOperationResult() {
 }
 
 async function generateFinancialFig() {
-
   const balanceSheetContainer = document.getElementById('financial-tbl');
   balanceSheetContainer.innerHTML = '';
   try {
@@ -407,7 +406,7 @@ async function generateFinancialFig() {
     container.appendChild(space);
     container.appendChild(table);
 
-    let gridInstance = createGridInstance(tableId, false, true);
+    let gridInstance = createGridInstance(tableId, true);
 
     updateTable(
       gridInstance,

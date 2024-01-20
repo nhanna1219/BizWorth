@@ -166,7 +166,7 @@ def plot_stock_price(ticker,npat_df,pe_df,stock_df):
     fig.update_layout(
         template='gridon',
         title={
-            'text': "<b>Dự đoán giá trị cổ phiếu dựa trên tỉ lệ P/E</b>",
+            'text': "<b>Dự Đoán Giá Trị Cổ Phiếu Theo Phương Pháp P/E</b>",
             'y':0.9,
             'x':0.5,
             'xanchor': 'center',
