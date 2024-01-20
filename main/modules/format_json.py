@@ -1,5 +1,5 @@
 import pandas as pd
-
+import re
 
 # Format rate table helper
 def FormatRateDF(data):
@@ -323,5 +323,268 @@ def FormatBSTable(data):
             "note-2": data.iloc[20]["Note"],
         }
     )
+
+    return jsonData
+
+# Format business result table helper
+def FormatBRDF(dataBOR, dataME, returnTime):
+    if not isinstance(dataBOR, pd.DataFrame):
+        raise ValueError("Data BOR must be DataFrame")
+
+    if not isinstance(dataME, pd.DataFrame):
+        raise ValueError("Data ME must be DataFrame")
+
+    borDF = dataBOR.copy()
+    borDF = borDF.iloc[0:20]
+    meDF = dataME.copy()
+    meDFTransposed = meDF.T
+    meDFTransposed.columns = meDFTransposed.iloc[0]
+    meDFTransposed = meDFTransposed[1:]
+    meDFTransposed.reset_index(inplace=True)
+    meDFTransposed.columns.name = None
+    meDFTransposed.rename(columns={"index": "Item"}, inplace=True)
+    meDFTransposed["Item"] = "20. " + meDFTransposed["Item"]
+    meDFTransposed.columns = meDFTransposed.columns.str.strip()
+    extractDF = pd.concat([borDF, meDFTransposed], axis=0, ignore_index=True)
+    extractDF.dropna(axis=1, inplace=True)
+
+    time = []
+
+    if returnTime:
+        for i in range(1, len(extractDF.columns)):
+            currentCol = extractDF.columns[i]
+            previousCol = f"{extractDF.columns[i].split()[0]} {int(extractDF.columns[i].split()[1]) - 1}"
+
+            if previousCol in extractDF.columns:
+                time.append(currentCol)
+
+    return time, extractDF
+
+
+def EvaluateField(df, i, pos):
+    GREEN = 1
+    RED = -1
+
+    for j in [1, 3, 6, 9, 10, 13, 16, 17, 18]:
+        if df.iloc[j][i] <= 0:
+            df.at[j, "Color-" + pos] = GREEN
+
+    for j in [2, 4, 5, 8, 11, 12, 14, 15, 19]:
+        if df.iloc[j][i] <= 0:
+            df.at[j, "Color-" + pos] = RED
+
+    if (df.iloc[1][i] / df.iloc[0][i]) > 0.2:
+        df.at[1, "Color-" + pos] = RED
+
+    if (df.iloc[3][i] / df.iloc[2][i]) > 0.65:
+        df.at[3, "Color-" + pos] = RED
+
+    if (df.iloc[6][i] / df.iloc[0][i]) > 0.05:
+        df.at[6, "Color-" + pos] = RED
+
+    if df.iloc[20][i] > 0:
+        df.at[20, "Color-" + pos] = GREEN
+        df.at[20, "Note-" + pos] = "Doanh nghiệp có khả năng trả nợ"
+    else:
+        df.at[20, "Color-" + pos] = RED
+        df.at[20, "Note-" + pos] = "Doanh nghiệp không có khả năng trả nợ"
+
+    for j in range(1, 20):
+        df.at[j, "Note-" + pos] = (
+            str(round(df.iloc[j][i] / df.iloc[0][i] * 100, 4)) + "% Tổng doanh thu"
+        )
+
+
+def SplitBRDF(data, time):
+    if not isinstance(data, pd.DataFrame):
+        raise ValueError("Data must be DataFrame")
+
+    WHITE = 0
+    df = data.copy()
+    previousCol = f"{time.split()[0]} {int(time.split()[1]) - 1}"
+
+    df = df[["Item", previousCol, time]]
+    df["Color-1"] = WHITE
+    df["Note-1"] = ""
+    df["Color-2"] = WHITE
+    df["Note-2"] = ""
+    EvaluateField(df, previousCol, "1")
+    EvaluateField(df, time, "2")
+
+    df[previousCol] = df[previousCol].astype(float)
+    df[time] = df[time].astype(float)
+    df["Color-1"] = df["Color-1"].astype(float)
+    df["Color-2"] = df["Color-2"].astype(float)
+
+    return df
+
+
+def FormatBRTable(data):
+    if not isinstance(data, pd.DataFrame):
+        raise ValueError("Data must be DataFrame")
+
+    if data.shape[1] != 7:
+        raise ValueError("DataFrame must have 7 columns")
+
+    header = [data.columns[1], data.columns[2]]
+    jsonData = []
+
+    for i in data.index:
+        jsonData.append(
+            {
+                "name": data.iloc[i]["Item"],
+                "value-1": data.iloc[i][data.columns[1]],
+                "note-1": {"v": data.iloc[i]["Note-1"], "c": data.iloc[i]["Color-1"]},
+                "value-2": data.iloc[i][data.columns[2]],
+                "note-2": {
+                    "v": data.iloc[i]["Note-2"],
+                    "c": data.iloc[i]["Color-2"],
+                },
+            }
+        )
+
+    return [header, jsonData]
+
+
+# Format financial index table helper
+def sortSetDataTime(entry):
+    quarter, year = entry.split()
+    return year, int(quarter[1])
+
+def GetFIOptions(tickerData):
+    convertFormat = lambda x: re.sub(r"(\d+) - Q(\d+)", r"Q\2 \1", x)
+    data = []
+    for index in range(0, len(tickerData)):
+        data.append(
+            [i.replace("/", " ") for i in tickerData[index].Sales_Q["Date"].to_list()]
+        )
+        data.append(
+            [i.replace("/", " ") for i in tickerData[index].NPAT_Q["Date"].to_list()]
+        )
+        data.append(tickerData[index].balanceSheet.columns[1:].to_list())
+        data.append(
+            tickerData[index]
+            .FinancialReport_Q["Duration"]
+            .apply(convertFormat)
+            .to_list()
+        )
+
+    df = pd.DataFrame(data)
+    intersectionYears = set(df.iloc[0].dropna())
+    for i in range(1, len(df.index)):
+        intersectionYears = intersectionYears.intersection(set(df.iloc[i].dropna()))
+
+    sortedYears = sorted(intersectionYears, key=sortSetDataTime)
+    
+    # ITD, CMG Q2 2023
+    return sortedYears
+
+
+def FormatFITable(tickerData, tickerNames, time):
+    eps, dt_kpt, ts_nn, vqtsn, ros = (
+        {"index": "EPS"},
+        {"index": "DT/Khoản phải thu"},
+        {"index": "TS có thanh khoản cao/Nợ ngắn"},
+        {"index": "Vòng quay TS ngắn"},
+        {"index": "ROS"},
+    )
+    
+    roa, roe, roic, n_ts, dbtc = (
+        {"index": "ROA"},
+        {"index": "ROE"},
+        {"index": "ROIC"},
+        {"index": "Nợ/TS"},
+        {"index": "Đòn bẩy tài chính"},
+    )
+    
+    jsonData = [eps, dt_kpt, ts_nn, vqtsn, ros, roa, roe, roic, n_ts, dbtc]
+    quarter, year = time.split()
+
+    for index in range(0, len(tickerData)):
+        sales = tickerData[index].Sales_Q
+        npat = tickerData[index].NPAT_Q
+        bs = tickerData[index].balanceSheet
+        financialReport = tickerData[index].FinancialReport_Q
+
+        eps[tickerNames[index]] = financialReport.loc[
+            financialReport["Duration"] == f"{year} - {quarter}", "EPS"
+        ].values[0]
+
+        if ((bs.loc[bs["Item"] == "III. Các khoản phải thu ngắn hạn", time].values[0] + 
+             bs.loc[bs["Item"] == "I. Các khoản phải thu dài hạn", time].values[0]) != 0):
+            dt_kpt[tickerNames[index]] = sales.loc[
+                sales["Date"] == f"{quarter}/{year}", "Sales"
+            ].values[0] / (
+                bs.loc[bs["Item"] == "III. Các khoản phải thu ngắn hạn", time].values[0]
+                + bs.loc[bs["Item"] == "I. Các khoản phải thu dài hạn", time].values[0]
+            )
+        else:
+            dt_kpt[tickerNames[index]] = 0
+
+        if (bs.loc[bs["Item"] == "I. Nợ ngắn hạn", time].values[0] != 0):
+            ts_nn[tickerNames[index]] = (
+                bs.loc[bs["Item"] == "I. Tiền và các khoản tương đương tiền", time].values[
+                    0
+                ]
+                / bs.loc[bs["Item"] == "I. Nợ ngắn hạn", time].values[0]
+            )
+        else:
+            ts_nn[tickerNames[index]] = 0
+
+        if (bs.loc[bs["Item"] == "A. Tài sản lưu động và đầu tư ngắn hạn", time].values[0] != 0):
+            vqtsn[tickerNames[index]] = (sales.loc[sales["Date"] == f"{quarter}/{year}", "Sales"].values[0]
+                / bs.loc[
+                    bs["Item"] == "A. Tài sản lưu động và đầu tư ngắn hạn", time
+                ].values[0]
+            )
+        else:
+            vqtsn[tickerNames[index]] = 0
+
+        if (sales.loc[sales["Date"] == f"{quarter}/{year}", "Sales"].values[0] != 0):
+            ros[tickerNames[index]] = (
+                npat.loc[npat["Date"] == f"{quarter}/{year}", "NOPAT"].values[0] * 1e9
+            ) / sales.loc[sales["Date"] == f"{quarter}/{year}", "Sales"].values[0]
+        else:
+            ros[tickerNames[index]] = 0
+
+        if (bs.loc[bs["Item"] == "TỔNG CỘNG TÀI SẢN", time].values[0] != 0):
+            roa[tickerNames[index]] = (
+                npat.loc[npat["Date"] == f"{quarter}/{year}", "NOPAT"].values[0] * 1e9
+            ) / bs.loc[bs["Item"] == "TỔNG CỘNG TÀI SẢN", time].values[0]
+        else:
+            roa[tickerNames[index]] = 0
+
+        if (bs.loc[bs["Item"] == "B. Nguồn vốn chủ sở hữu", time].values[0] != 0):
+            roe[tickerNames[index]] = (
+                npat.loc[npat["Date"] == f"{quarter}/{year}", "NOPAT"].values[0] * 1e9
+            ) / bs.loc[bs["Item"] == "B. Nguồn vốn chủ sở hữu", time].values[0]
+        else:
+            roe[tickerNames[index]] = 0
+
+        if ((
+                bs.loc[bs["Item"] == "B. Nguồn vốn chủ sở hữu", time].values[0]
+                + bs.loc[bs["Item"] == "II. Nợ dài hạn", time].values[0]
+            ) != 0):
+            roic[tickerNames[index]] = (
+                npat.loc[npat["Date"] == f"{quarter}/{year}", "NOPAT"].values[0] * 1e9
+            ) / (
+                bs.loc[bs["Item"] == "B. Nguồn vốn chủ sở hữu", time].values[0]
+                + bs.loc[bs["Item"] == "II. Nợ dài hạn", time].values[0]
+            )
+        else:
+            roic[tickerNames[index]] = 0
+
+        n_ts[tickerNames[index]] = (
+            bs.loc[bs["Item"] == "A. Nợ phải trả", time].values[0]
+            / bs.loc[bs["Item"] == "TỔNG CỘNG TÀI SẢN", time].values[0]
+        )
+
+        if (bs.loc[bs["Item"] == "B. Nguồn vốn chủ sở hữu", time].values[0] != 0):
+            dbtc[tickerNames[index]] = (
+                bs.loc[bs["Item"] == "TỔNG CỘNG TÀI SẢN", time].values[0]
+                / bs.loc[bs["Item"] == "B. Nguồn vốn chủ sở hữu", time].values[0]
+            )
+        else:
+            dbtc[tickerNames[index]] = 0
 
     return jsonData

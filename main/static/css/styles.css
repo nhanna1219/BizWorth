@@ -204,7 +204,9 @@ p {
     background-color: #233c56;
 }
 
-#dropdownEPS, #dropdownSales, #dropdownNpat, .dropdown-toggle-split, #dropdownBS, .dropdown-toggle-split:hover{
+#dropdownEPS, #dropdownSales, #dropdownNpat, 
+.dropdown-toggle-split, #dropdownBS, #dropdownOR, 
+#dropdownFF, .dropdown-toggle-split:hover{
     color: white !important;
     background-color: #233c56 !important;
     border: none;

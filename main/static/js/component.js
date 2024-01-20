@@ -39,26 +39,29 @@ async function generateRateTableComponent() {
     years_sales.forEach((year) => {
       salesOptions += `<a class="analysis-options dropdown-item">${year}</a>`;
     });
-
     for (let i = 0; i <= 2; i++){
+      let lastOption;
       let dropdownId, tableId = '';
       let container;
       let dropdownMenu = document.createElement("div");
       dropdownMenu.className = "dropdown-menu";
 
       if (i == 0){
+        lastOption = years_eps.slice(-1);
         dropdownId = "dropdownEPS";
         tableId = "eps_table";
         container = epsContainer;
         dropdownMenu.innerHTML = epsOptions;
       }
       else if (i == 1){
+        lastOption = years_npat.slice(-1);
         dropdownId = "dropdownNpat";
         tableId = "npat_table";
         container = npatContainer;
         dropdownMenu.innerHTML = npatOptions;
 
       } else if (i == 2){
+        lastOption = years_sales.slice(-1);
         dropdownId = "dropdownSales";
         tableId = "sales_table";
         container = salesContainer;
@@ -72,7 +75,7 @@ async function generateRateTableComponent() {
       dropdownButton.id = dropdownId;
       dropdownButton.type = "button";
       dropdownButton.className = "btn btn-primary";
-      dropdownButton.innerText = "Chọn năm";
+      dropdownButton.innerText = lastOption;
 
       let dropdownToggleButton = document.createElement("button");
       dropdownToggleButton.type = "button";
@@ -103,26 +106,25 @@ async function generateRateTableComponent() {
       container.appendChild(table);
 
       let gridInstance = createGridInstance(tableId);
-
       if (i == 0){
         updateTable(
           gridInstance,
           dataYears.frq_data,
-          generateRateTableDef(dataYears.frq_years)
+          generateRateTableDef(dataYears.frq_years,1)
         );
       }
       else if (i == 1){
         updateTable(
           gridInstance,
           dataYears.npat_data,
-          generateRateTableDef(dataYears.npat_years)
+          generateRateTableDef(dataYears.npat_years,1e9)
         );
 
       } else if (i == 2){
         updateTable(
           gridInstance,
           dataYears.sales_data,
-          generateRateTableDef(dataYears.sales_years)
+          generateRateTableDef(dataYears.sales_years,1e9)
         );
       }
     }
@@ -185,7 +187,7 @@ async function generateBalanceSheet() {
     dropdownButton.id = dropdownId;
     dropdownButton.type = "button";
     dropdownButton.className = "btn btn-primary";
-    dropdownButton.innerText = "Chọn năm";
+    dropdownButton.innerText = years.slice(-1);
 
     let dropdownToggleButton = document.createElement("button");
     dropdownToggleButton.type = "button";
@@ -214,7 +216,7 @@ async function generateBalanceSheet() {
     container.appendChild(space);
     container.appendChild(table);
 
-    let gridInstance = createGridInstance(tableId, true);
+    let gridInstance = createGridInstance(tableId, false,true);
 
     updateTable(
       gridInstance,
@@ -258,18 +260,17 @@ async function generateOperationResult() {
 
     let dataYears = await response.json();
     
-    let years = dataYears.years; 
-
-    // years.forEach((year) => {
-    //   bsOptions += `<a class="bs-options dropdown-item">${year}</a>`;
-    // });
+    let years = dataYears.dropdown_json;
+    years.forEach((year) => {
+      bsOptions += `<a class="or-options dropdown-item">${year}</a>`;
+    });
 
     let dropdownId, tableId = '';
     let container;
     let dropdownMenu = document.createElement("div");
     dropdownMenu.className = "dropdown-menu";
 
-    dropdownId = "dropdownBS";
+    dropdownId = "dropdownOR";
     tableId = "or_table";
     container = balanceSheetContainer;
     dropdownMenu.innerHTML = bsOptions;
@@ -281,7 +282,7 @@ async function generateOperationResult() {
     dropdownButton.id = dropdownId;
     dropdownButton.type = "button";
     dropdownButton.className = "btn btn-primary";
-    dropdownButton.innerText = "Chọn năm";
+    dropdownButton.innerText = years.slice(-1);
 
     let dropdownToggleButton = document.createElement("button");
     dropdownToggleButton.type = "button";
@@ -310,29 +311,29 @@ async function generateOperationResult() {
     container.appendChild(space);
     container.appendChild(table);
 
-    let gridInstance = createGridInstance(tableId);
+    let gridInstance = createGridInstance(tableId, true);
 
     updateTable(
       gridInstance,
-      {},
-      {}
+      dataYears.data,
+      generateBRTableDef(dataYears.years)
     );
-    // document.querySelectorAll('.bs-options').forEach(option => {
-    //   option.addEventListener('click', async function (e) {
-    //     var currentElement = e.target;
-    //     var selectedYear = currentElement.innerText;
+    document.querySelectorAll('.or-options').forEach(option => {
+      option.addEventListener('click', async function (e) {
+        var currentElement = e.target;
+        var selectedYear = currentElement.innerText;
     
-    //     var commonAncestor = currentElement.closest('.btn-group');
-    //     if (commonAncestor) {
-    //       var dropdownElement = commonAncestor.querySelector('[id^="dropdown"]');
-    //       if (dropdownElement) {
-    //         var btnId = dropdownElement.id;
-    //         document.getElementById(btnId).innerText = selectedYear;
-    //         await dropdownBSTable(selectedYear,'or_table');
-    //       }
-    //     }
-    //   });
-    // });
+        var commonAncestor = currentElement.closest('.btn-group');
+        if (commonAncestor) {
+          var dropdownElement = commonAncestor.querySelector('[id^="dropdown"]');
+          if (dropdownElement) {
+            var btnId = dropdownElement.id;
+            document.getElementById(btnId).innerText = selectedYear;
+            await dropdownOR(selectedYear,'or_table');
+          }
+        }
+      });
+    });
     
   } catch (error) {
     console.error("Error:", error);
@@ -354,30 +355,30 @@ async function generateFinancialFig() {
 
     let dataYears = await response.json();
     
-    let years = dataYears.years; 
+    let options = dataYears.dropdown_json; 
 
-    // years.forEach((year) => {
-    //   bsOptions += `<a class="bs-options dropdown-item">${year}</a>`;
-    // });
+    options.forEach((option) => {
+      bsOptions += `<a class="ff-options dropdown-item">${option}</a>`;
+    });
 
     let dropdownId, tableId = '';
     let container;
     let dropdownMenu = document.createElement("div");
     dropdownMenu.className = "dropdown-menu";
 
-    dropdownId = "dropdownBS";
+    dropdownId = "dropdownFF";
     tableId = "financial_table";
     container = balanceSheetContainer;
     dropdownMenu.innerHTML = bsOptions;
 
     let dropdownContainer = document.createElement("div");
-    dropdownContainer.className = "btn-group";
+    dropdownContainer.className = "btn-group d-block";
 
     let dropdownButton = document.createElement("button");
     dropdownButton.id = dropdownId;
     dropdownButton.type = "button";
     dropdownButton.className = "btn btn-primary";
-    dropdownButton.innerText = "Chọn năm";
+    dropdownButton.innerText = options.slice(-1);
 
     let dropdownToggleButton = document.createElement("button");
     dropdownToggleButton.type = "button";
@@ -406,14 +407,14 @@ async function generateFinancialFig() {
     container.appendChild(space);
     container.appendChild(table);
 
-    let gridInstance = createGridInstance(tableId);
+    let gridInstance = createGridInstance(tableId, false, true);
 
     updateTable(
       gridInstance,
-      {},
-      {}
+      dataYears.data,
+      generateFITableDef(dataYears.stocks)
     );
-    document.querySelectorAll('.bs-options').forEach(option => {
+    document.querySelectorAll('.ff-options').forEach(option => {
       option.addEventListener('click', async function (e) {
         var currentElement = e.target;
         var selectedYear = currentElement.innerText;
@@ -434,6 +435,7 @@ async function generateFinancialFig() {
     console.error("Error:", error);
   }
 }
+
 // Event function
 async function dropDownRateTable(selectedItem, btnId) {
   let tableId = '';
@@ -461,5 +463,5 @@ async function dropdownOR(selectedItem, tableId) {
 
 async function dropdownFinancialFig(selectedItem, tableId) {
   let tableRate = document.getElementById(tableId);
-  await requestORData(tableRate.__ag_grid_instance,selectedItem);
+  await requestFFData(tableRate.__ag_grid_instance,selectedItem);
 }

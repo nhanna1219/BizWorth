@@ -58,12 +58,11 @@ function inputHandler(){
                 generateOperationResult()
             ]);
             document.querySelectorAll('.ag-theme-quartz-dark').forEach((tbl,index) => {
-                if (index !== 3){
+                if (index < 3){
                     tbl.style.height = '286px';
                 } else {
                     tbl.style.height = '682px';
                 }
-                
             });
 
 
@@ -263,23 +262,37 @@ async function getBusinessInfo(ticker){
         ];
         
         sections.forEach((section, index) => {
-            const element = document.querySelector(section.selector);
-            
+            let element = document.querySelector(section.selector);
+            const parent = element.parentElement;
+            const existReadMore = parent.querySelector('a');
+            if (existReadMore){
+                existReadMore.remove();
+            }
+
             // Clear the innerHTML
             element.innerHTML = '';
 
+            let content;
             // Remove the read mode
-            var readMode = element.nextSibling.cloneNode();
-            element.nextSibling.remove();
+            if (index == 0){
+                content = 'business-profile';
+            } else if (index == 1) {
+                content = 'business-history'
+            } else if (index == 2) {
+                content = 'business-prospect'
+            }
+            let readMoreHTML = `
+                <a href="javascript:void(0);" class="read-more" data-content="${content}">Đọc Thêm</a>
+            `;
 
             if (index === 0) {
                 const pElement = document.createElement('p');
                 pElement.innerHTML = section.content;
                 element.append(pElement);
-                element.parentElement.append(readMode);
+                element.parentElement.innerHTML += readMoreHTML;
             } else {
                 element.innerHTML = section.content;
-                element.parentElement.append(readMode);
+                element.parentElement.innerHTML += readMoreHTML;
             }
         });
 
@@ -413,7 +426,6 @@ async function addDropdowns(csMaxPoints=20, mx4MaxPoints=10){
 
 function readMoreNLess() {
     const readMore = document.querySelectorAll('.read-more');
-    
     readMore.forEach(element => {
         const contentId = element.getAttribute('data-content');
         const contentElement = document.querySelector('.' + contentId);
@@ -501,6 +513,7 @@ function get_financial_report() {
                 new Function(scriptContent)();
             }
         }
+        generateFinancialFig();
         financialContainer.scrollIntoView();
     });
 }

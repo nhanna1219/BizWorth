@@ -138,6 +138,7 @@ def plot_stock_price(ticker,npat_df,pe_df,stock_df):
     df_forcast = helper_forcast.Forecast(12 - len(npat_current), const.DATE_MODE)
     df_concat = pd.concat([npat_df, df_forcast])
     npat_list = df_concat['NOPAT'].tolist()
+    # npat_list = [x / 1e9 for x in npat_list]
     data_point = helper_PE.GetDataPoints(npat_list, 4)
     # Load the dataset containing the P/E historical data
     pe_last_year = pe_df.iloc[-1]["PE"]
@@ -470,8 +471,9 @@ def get_financial_report(request):
 def get_rate_table(request):
     global tickerData
     if request.method == 'POST':
-        frqDF = tickerData.FinancialReport_Q
-        npatDF = tickerData.NPAT_Q
+        frqDF = tickerData.FinancialReport_Q.copy()
+        npatDF = tickerData.NPAT_Q.copy()
+        npatDF['NOPAT'] *= 1e9
         saleDF = tickerData.Sales_Q
         
         dropdown_json = get_dropdown_rate_tbl(frqDF, npatDF, saleDF)
@@ -524,7 +526,8 @@ def filter_data_tbl(request):
     global tickerData
     if request.method == 'POST':
         frqDF = tickerData.FinancialReport_Q
-        npatDF = tickerData.NPAT_Q
+        npatDF = tickerData.NPAT_Q.copy()
+        npatDF['NOPAT'] *= 1e9
         saleDF = tickerData.Sales_Q
 
         data = json.loads(request.body)
@@ -596,9 +599,18 @@ def get_operation_result(request):
         operation_result = tickerData.businessOperationResult
         money_exchange = tickerData.moneyExchange
         
+        yearsBR, brDF = fmt.FormatBRDF(operation_result, money_exchange, True)
+        resBRDF = fmt.SplitBRDF(brDF, yearsBR[-1])
+        jsonBR = fmt.FormatBRTable(resBRDF)
+
         return JsonResponse(
             {
-            }, safe=False)
+                "dropdown_json": yearsBR,
+                "years": jsonBR[0],
+                "data": jsonBR[1],
+            },
+            safe=False,
+        )
         
 @csrf_exempt      
 def filter_operation_result(request):
@@ -607,23 +619,35 @@ def filter_operation_result(request):
         data = json.loads(request.body)
         selectedYear = data.get('selectedYear')
         
-        return JsonResponse(
-            {
+        yearsBR, brDF = fmt.FormatBRDF(
+            tickerData.businessOperationResult, tickerData.moneyExchange, False
+        )
+        resBRDF = fmt.SplitBRDF(brDF, selectedYear)
+        jsonBR = fmt.FormatBRTable(resBRDF)
 
-            })
+        return JsonResponse({"years": jsonBR[0], "data": jsonBR[1]})
         
 @csrf_exempt      
 def get_financial_fig(request):
     if request.method == "POST":
         tickersData = []
+        tickerNames = []
+        
         df = pd.read_csv(f'main/static/data/tickers.csv', header=None)
         df.columns = ['short_name', 'full_name','outstanding_share', 'pe_avg_industry']
         tickers = df.to_dict('records')
         for ticker in tickers:
+            tickerNames.append(ticker["short_name"])
             tickersData.append(TickerData(read_files_for_ticker(ticker["short_name"])))
+        
+        time = fmt.GetFIOptions(tickersData)
+        jsonff = fmt.FormatFITable(tickersData, tickerNames, time[-1])
         
         return JsonResponse(
             {
+                "data": jsonff,
+                "dropdown_json": time,
+                "stocks": tickerNames
             }, safe=False)
         
 @csrf_exempt      
@@ -634,15 +658,20 @@ def filter_financial_fig(request):
         selectedQuarter = data.get('selectedQuarter')
         
         tickersData = []
+        tickerNames = []
         df = pd.read_csv(f'main/static/data/tickers.csv', header=None)
         df.columns = ['short_name', 'full_name','outstanding_share', 'pe_avg_industry']
         tickers = df.to_dict('records')
         for ticker in tickers:
+            tickerNames.append(ticker["short_name"])
             tickersData.append(TickerData(read_files_for_ticker(ticker["short_name"])))
+        
+        jsonff = fmt.FormatFITable(tickersData, tickerNames, selectedQuarter)
         
         return JsonResponse(
             {
-                
+                "data": jsonff,
+                "stocks": tickerNames
             })
 
 def home(request):
