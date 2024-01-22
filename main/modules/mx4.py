@@ -62,7 +62,7 @@ class Mx4Helper:
         if len(table[8]) != 2:
             raise ValueError("table [8] must be a list of 2 number")
         
-        if table[8][0] < table[8][1] * self.ReferenceRates[8]:
+        if table[8][0] < (table[8][1] * self.ReferenceRates[8] * 1e3):
             scores.append(100)
         else:
             scores.append(0)

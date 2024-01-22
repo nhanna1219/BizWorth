@@ -406,7 +406,7 @@ async function generateFinancialFig() {
     container.appendChild(space);
     container.appendChild(table);
 
-    let gridInstance = createGridInstance(tableId, true);
+    let gridInstance = createGridInstance(tableId, false, true);
 
     updateTable(
       gridInstance,
